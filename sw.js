@@ -1,6 +1,6 @@
 /* sw.js — cachea todo para funcionamiento offline completo.
    Sube CACHE (v2, v3…) cada vez que edites archivos para forzar la actualización. */
-const CACHE = 'plan-agosto-v2';
+const CACHE = 'plan-agosto-v3';
 const ASSETS = [
   './',
   './index.html',

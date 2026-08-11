@@ -18,6 +18,8 @@
   --r:14px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* hidden manda siempre: .sheet y .toast fijan display y si no, taparían la pantalla */
+[hidden]{display:none !important}
 html,body{margin:0;padding:0}
 body{
   background:var(--bg);color:var(--text);
@@ -54,9 +56,11 @@ label.lab{display:block;font-size:14px;color:var(--muted);margin:0 0 6px}
 .record .big{font-size:19px;font-weight:700;line-height:1.2}
 .record .sub{color:#9fd6bd;font-size:13.5px;margin-top:2px}
 
-/* --- banner de instalación --- */
-.install{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid #2b4a3d;
-  border-radius:var(--r);padding:8px 8px 8px 14px;margin-bottom:8px}
+/* --- banner de instalación: flotante, no ocupa altura en el flujo --- */
+.install{position:fixed;left:10px;right:10px;top:calc(8px + env(safe-area-inset-top));z-index:45;
+  max-width:620px;margin:0 auto;box-shadow:0 8px 28px #000b;
+  display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid #2b4a3d;
+  border-radius:var(--r);padding:8px 8px 8px 14px}
 .install .itxt{flex:1;display:flex;flex-direction:column;line-height:1.25;min-width:0}
 .install .itxt b{font-size:15px}
 .install .ix{width:38px;height:44px;flex:none;color:var(--faint);font-size:15px}
