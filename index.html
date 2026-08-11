@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>Plan agosto</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<main id="app"></main>
+
+<nav id="nav">
+  <button data-view="hoy" class="on"><span class="ni">▣</span>Hoy</button>
+  <button data-view="semana"><span class="ni">▦</span>Semana</button>
+  <button data-view="sesion"><span class="ni">◈</span>Sesión</button>
+  <button data-view="tendencias"><span class="ni">◠</span>Tendencias</button>
+  <button data-view="protocolos"><span class="ni">☰</span>Textos</button>
+</nav>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-card">
+    <div class="sheet-head">
+      <h2 id="sheet-title"></h2>
+      <button class="x" data-close aria-label="Cerrar">✕</button>
+    </div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
