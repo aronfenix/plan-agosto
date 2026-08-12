@@ -1,6 +1,6 @@
 /* sw.js — cachea todo para funcionamiento offline completo.
    Sube CACHE (v2, v3…) cada vez que edites archivos para forzar la actualización. */
-const CACHE = 'plan-agosto-v3';
+const CACHE = 'plan-agosto-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -13,20 +13,23 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  /* cache:'reload' evita que el navegador sirva una copia vieja al instalar */
+  /* cache:'reload' evita que el navegador sirva una copia vieja al instalar.
+     NO se llama a skipWaiting() aquí: el nuevo sw espera a que el usuario
+     pulse "Actualizar ahora", para no recargar la pantalla mientras registra. */
   e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(ASSETS.map(u => new Request(u, { cache:'reload' }))))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, { cache:'reload' }))))
   );
 });
 
+/* La app pide el relevo cuando el usuario pulsa "Actualizar ahora" */
+self.addEventListener('message', e => { if(e.data === 'SKIP_WAITING') self.skipWaiting(); });
+
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  e.waitUntil((async () => {
+    const claves = await caches.keys();
+    await Promise.all(claves.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
 /* Cache first: la app no necesita red para nada. */

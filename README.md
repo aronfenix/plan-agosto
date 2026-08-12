@@ -38,15 +38,25 @@ Todo lo editable está en `data.js`. Después de cualquier cambio, **sube el nú
 
 ### Cambiar un ejercicio
 
-Busca `const SESIONES` y edita el objeto que quieras. Cada ejercicio tiene cinco campos:
+Busca `const SESIONES` y edita el objeto que quieras. Cada ejercicio tiene esta forma:
 
 ```js
-{ id: 'M1',                                  // NO lo cambies: es la clave del historial de cargas
+{ id: 'M1',                 // NO lo cambies: es la clave del historial de cargas
   nombre: 'Peso muerto rumano con mancuernas',
   series: '2-3 × 8-12',
-  como: 'Dos a cuatro frases de cómo se hace.',
-  aviso: 'Lo que sale en el recuadro destacado de técnica.' }
+  unidad: 'mancuerna',      // 'banda' cambia el campo de carga a "banda y posición"
+  material: ['mancuernas'], // claves del inventario; si falta algo, sale la alternativa
+  que: 'Para qué sirve. Es lo único que se ve con el ejercicio plegado.',
+  montaje: 'Cómo colocarse antes de empezar.',
+  pasos: ['Paso 1…', 'Paso 2…'],   // en empujes, bisagras y transportes, di dónde va la mirada
+  respiracion: 'Cuándo se inhala y se exhala.',
+  errores: ['En qué se va a equivocar, concreto.'],
+  senal: 'Dónde se nota si va bien. Un dato observable, no una sensación vaga.',
+  siduele: 'Qué hacer. Por defecto regresar, nunca eliminar.',
+  alternativa: 'Sin ese material. No puede depender de nada que quizá no tenga.' }
 ```
+
+Los campos `errores`, `senal`, `siduele` y `alternativa` son obligatorios en todos.
 
 > Si cambias un `id`, pierdes el histórico de cargas de ese ejercicio. Cambia el `nombre` todo lo que quieras; el `id` déjalo quieto.
 
@@ -98,15 +108,39 @@ Para semanas sin entrada, la app usa la del 10 de agosto.
 
 ---
 
-## Después de cada cambio: subir la versión de la caché
+### Otros bloques editables
 
-El service worker sirve desde caché primero, así que un archivo editado **no llega al móvil** hasta que cambia el nombre de la caché. En `sw.js`, primera línea:
+| Constante | Qué controla |
+|---|---|
+| `CAMINATA` | Minutos por semana, ventanas horarias, y los textos de por qué / calor / cómo |
+| `MATERIAL` | El inventario de Ajustes. Las `key` son las que usan los ejercicios |
+| `BLOQUES_DIA` | Los siete bloques de la pantalla Plan y sus horas sugeridas |
+| `FORMATO_SEMANA` | El texto de series/RIR de cada semana |
+| `PROGRESION_BANDA`, `GARRAFAS` | Recuadros fijos en la cabecera de P1 y P2 |
+| `REVISION` | La lista del 4 de septiembre |
+| `CHANGELOG`, `VERSION` | Lo que sale en Ajustes y en la hoja de novedades |
+
+---
+
+## Después de cada cambio: subir dos números
+
+1. **`sw.js`, primera línea** — el service worker sirve desde caché primero, así que un archivo editado no llega al móvil hasta que cambia el nombre de la caché:
 
 ```js
-const CACHE = 'plan-agosto-v2';   // súbelo a v3, v4…
+const CACHE = 'plan-agosto-v4';   // súbelo a v5, v6…
 ```
 
-Sube el número, sube los cambios a GitHub, y al abrir la app en el móvil (con conexión) se actualiza sola. Si tienes prisa: cerrar la app del todo y volver a abrirla.
+2. **`data.js`** — para que la app sepa qué versión enseñar y qué novedades contar:
+
+```js
+const VERSION = 'v4';
+const VERSION_FECHA = '20 sep 2026';
+const CHANGELOG = [ { v:'v4', fecha:'2026-09-20', cambios:['…'] }, … ];
+```
+
+Sube los cambios a GitHub. En el móvil, *Ajustes → Buscar actualizaciones* → **Actualizar ahora**. La app también lo comprueba sola cada 6 horas y avisa con una tira en la pantalla de Hoy.
+
+**Actualizar nunca borra los datos.** Si algún día cambias el formato de `localStorage`, amplía la función `migrar()` de `app.js` en vez de descartar lo viejo.
 
 ---
 
@@ -170,8 +204,10 @@ Una única clave en `localStorage`: `plan-agosto-v1`.
   weekPlans: { '2026-08-10': { '2026-08-10': { fuerza:'P1', piscina:'regenerativa' }, … } },
   days: { '2026-08-10': { factors:{…}, pain, energy, painkiller, note, createdAt, lockedAt } },
   loads: { 'M1': [{ date, value, reps }] },
-  sessions: { '2026-08-10': { 'M1': true } },   // ejercicios marcados en la pantalla de sesión
-  flags: { … },                                  // avisos ya mostrados, fecha de la última exportación
+  sessions: { '2026-08-10': { 'M1': true, 'BL-caminata': true } },  // ejercicios y bloques marcados
+  material: { bandas: true, tubo: false, bandas_nota: '2 verdes' }, // inventario
+  ubic: { '2026-08-10': 'madrid' },              // madrid | pueblo | fuera
+  flags: { … },                                  // avisos ya mostrados, última exportación, plegados
   cervicalLevel: 1
 }
 ```
@@ -183,7 +219,7 @@ Estados de cada factor: `2` completo · `1` mínimo · `0` no hecho · ausente =
 
 | Métrica                      | Definición |
 |------------------------------|------------|
-| Día cumplido                 | ≥ 5 factores **aplicables** con estado ≥ 1 |
+| Día cumplido                 | ≥ 5 factores **aplicables** con estado ≥ 1, **o** el suelo mínimo completo (caminata + movilidad + cervicales) |
 | Semana cumplida              | ≥ 5 de 7 días cumplidos |
 | Peor cadena de fallos        | Máximo histórico de días consecutivos no cumplidos |
 | Días desde el último doble fallo | Días desde la última vez que hubo 2 días seguidos no cumplidos |
