@@ -1,59 +1,42 @@
-/* sw.js — cachea todo para funcionamiento offline completo.
-   Sube CACHE (v2, v3…) cada vez que edites archivos para forzar la actualización. */
-const CACHE = 'plan-agosto-v4';
-const ASSETS = [
-  './',
-  './index.html',
-  './app.css',
-  './data.js',
-  './app.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+/* Service worker: la app funciona sin conexión.
+   Para publicar cambios: sube el número de CACHE. La app avisará de que hay versión nueva. */
+const CACHE = 'plan-v3-001';
+const ARCHIVOS = ['./','index.html','app.css','app.js','figura.js','ejercicios.js','estiramientos.js','textos.js',
+                  'manifest.json','icon-192.png','icon-512.png'];
 
 self.addEventListener('install', e => {
-  /* cache:'reload' evita que el navegador sirva una copia vieja al instalar.
-     NO se llama a skipWaiting() aquí: el nuevo sw espera a que el usuario
-     pulse "Actualizar ahora", para no recargar la pantalla mientras registra. */
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, { cache:'reload' }))))
-  );
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(ARCHIVOS);
+    /* Paso único desde la app antigua (plan-agosto): tomar el control sin esperar */
+    const ks = await caches.keys();
+    if(ks.some(k => k.startsWith('plan-agosto'))) await self.skipWaiting();
+  })());
 });
-
-/* La app pide el relevo cuando el usuario pulsa "Actualizar ahora" */
-self.addEventListener('message', e => { if(e.data === 'SKIP_WAITING') self.skipWaiting(); });
 
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
-    const claves = await caches.keys();
-    await Promise.all(claves.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    const ks = await caches.keys();
+    await Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-/* Cache first: la app no necesita red para nada. */
+self.addEventListener('message', e => { if(e.data === 'SKIP_WAITING') self.skipWaiting(); });
+
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if(req.method !== 'GET') return;
-  e.respondWith(
-    caches.match(req, { ignoreSearch:true }).then(hit => {
-      if(hit) return hit;
-      return fetch(req).then(res => {
-        if(res && res.status === 200 && res.type === 'basic'){
-          const copia = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copia));
-        }
-        return res;
-      }).catch(() => caches.match('./index.html'));
-    })
-  );
-});
-
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  e.waitUntil(clients.matchAll({ type:'window', includeUncontrolled:true }).then(ls => {
-    for(const c of ls){ if('focus' in c) return c.focus(); }
-    if(clients.openWindow) return clients.openWindow('./index.html');
-  }));
+  if(req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  e.respondWith((async () => {
+    const enCache = await caches.match(req, { ignoreSearch:true });
+    if(enCache) return enCache;
+    try{
+      const res = await fetch(req);
+      if(res && res.ok){ const c = await caches.open(CACHE); c.put(req, res.clone()); }
+      return res;
+    }catch(err){
+      if(req.mode === 'navigate') return caches.match('index.html');
+      throw err;
+    }
+  })());
 });
